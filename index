@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business QR Code PWA</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div id="profile" class="container">
+        <img id="profilePic" src="" alt="Profile Picture" width="200px" height="200px">
+        <h2 id="name"></h2>
+        <p><strong>Company:</strong> <span id="company"></span></p>
+        <p><strong>Designation:</strong> <span id="designation"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+        <p><strong>Phone:</strong> <span id="phone"></span></p>
+        
+        <p><strong>Notes:</strong></p>
+        <textarea id="notes" rows="4" cols="40"></textarea> 
+        
+        <button onclick="updateNotes()">Save & Update QR Code</button>
+
+        <div id="qrcode"></div>
+    </div>
+    
+    <script>
+        let user = {
+            "name": "John Doe",
+            "company": "Tech Corp",
+            "designation": "Software Engineer",
+            "email": "john.doe@example.com",
+            "phone": "+1234567890",
+            "notes": "Available for new projects",
+            "profilePic": "https://i.ibb.co/ZRYN1qZb/101.jpg",
+            //"profilePic": "images/101.jpg", 
+            "profilePicUrl": "https://i.ibb.co/ZRYN1qZb/101.jpg" // Shortened URL
+        };
+
+        function loadProfile() {
+            document.getElementById("profilePic").src = user.profilePic;
+            document.getElementById("name").innerText = user.name;
+            document.getElementById("company").innerText = user.company;
+            document.getElementById("designation").innerText = user.designation;
+            document.getElementById("email").innerText = user.email;
+            document.getElementById("phone").innerText = user.phone;
+            document.getElementById("notes").value = user.notes; 
+
+           // generateQRCode(); 
+        }
+
+        function updateNotes() {
+            let updatedNotes = document.getElementById("notes").value.trim();
+            if (updatedNotes.length > 100) {
+                alert("Notes too long! Please keep it under 100 characters.");
+                return;
+            }
+            user.notes = updatedNotes;
+            generateQRCode(); 
+        }
+
+        function generateQRCode() {
+    let vCardData = `BEGIN:VCARD\nVERSION:4.0\n`;
+
+    // Name formatting for iOS
+    let nameParts = user.name.split(" "); 
+    let lastName = nameParts.pop(); // Last word as last name
+    let firstName = nameParts.join(" "); // Rest as first name
+    vCardData += `N:${lastName};${firstName};;;\n`; // Last;First;;;
+    vCardData += `FN:${user.name}\n`; // Full Name
+    
+    vCardData += `ORG:${user.company}\n`; // Company
+    vCardData += `TITLE:${user.designation}\n`; // Job Title
+    vCardData += `EMAIL:${user.email}\n`; // Email
+    vCardData += `TEL:${user.phone}\n`; // Phone
+
+    // ✅ Fix for Android Notes - Use "LABEL" instead of "X-ANDROID-CUSTOM"
+    vCardData += `item1.X-ABLabel:_$!<Notes>!$_\n`;
+    vCardData += `item1.NOTE:${user.notes}\n`;
+    vCardData += `NOTE:${user.notes.substring(0, 100)}\n`;
+
+    // ✅ Fix for iOS Notes
+    vCardData += `item2.NOTE:${user.notes}\n`;
+
+    // ✅ Profile Picture (Some devices may ignore this)
+    vCardData += `URL:${user.profilePicUrl || ""}\n`;
+
+    vCardData += `END:VCARD`;
+
+    let qrContainer = document.getElementById("qrcode");
+    qrContainer.innerHTML = ""; 
+
+    setTimeout(() => {
+        new QRCode(qrContainer, {
+            text: vCardData,
+            width: 256,
+            height: 256,
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }, 100);
+}
+
+
+
+        window.onload = loadProfile;
+    </script>
+</body>
+</html>
